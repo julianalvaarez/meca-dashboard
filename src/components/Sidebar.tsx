@@ -1,6 +1,6 @@
 "use client"
 
-import { SidebarContent, Sidebar, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarSeparator, } from "@/components/ui/sidebar"
+import { SidebarContent, Sidebar, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarSeparator, useSidebar, } from "@/components/ui/sidebar"
 import { Ham, LayoutDashboard, Shirt, Trophy } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -31,6 +31,13 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -57,7 +64,7 @@ export function AppSidebar() {
               return (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive} tooltip={item.title} className="h-12 transition-all duration-200 hover:bg-sidebar-accent/50 data-[active=true]:bg-sidebar-accent" >
-                    <Link href={item.url} className="flex items-center gap-3 px-3">
+                    <Link href={item.url} className="flex items-center gap-3 px-3" onClick={handleLinkClick}>
                       <div className={`p-1.5 rounded-lg transition-colors ${isActive ? "text-primary-foreground shadow-sm" : "bg-transparent text-muted-foreground"}`}>
                         <item.icon className="size-5" />
                       </div>
