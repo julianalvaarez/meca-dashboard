@@ -1,10 +1,11 @@
 "use client"
 
-import { SidebarContent, Sidebar, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarSeparator, useSidebar, } from "@/components/ui/sidebar"
-import { Ham, LayoutDashboard, Shirt, Trophy } from "lucide-react"
+import { SidebarContent, Sidebar, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarSeparator, useSidebar, } from "@/components/ui/sidebar"
+import { Ham, LayoutDashboard, LogOut, Shirt, Trophy } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 const menuItems = [
   {
@@ -31,11 +32,25 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const { isMobile, setOpenMobile } = useSidebar()
 
   const handleLinkClick = () => {
     if (isMobile) {
       setOpenMobile(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", { method: "POST" })
+      if (res.ok) {
+        toast.success("Sesión cerrada")
+        router.push("/login")
+        router.refresh()
+      }
+    } catch (error) {
+      toast.error("Error al cerrar sesión")
     }
   }
 
@@ -77,6 +92,25 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarSeparator className="mx-4 opacity-50" />
+
+      <SidebarFooter className="p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={handleLogout}
+              tooltip="Cerrar Sesión"
+              className="h-12 w-full transition-all duration-200 hover:bg-destructive/10 hover:text-destructive group-data-[collapsible=icon]:justify-center cursor-pointer"
+            >
+              <div className="flex items-center gap-3 px-3">
+                <LogOut className="size-5 text-muted-foreground group-hover:text-destructive" />
+                <span className="font-semibold text-sm group-data-[collapsible=icon]:hidden">Cerrar Sesión</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   )
 }

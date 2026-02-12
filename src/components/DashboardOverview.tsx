@@ -34,11 +34,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function DashboardOverview() {
-    const {
-        overviewData, setOverviewData,
-        evolutionData, setEvolutionData,
-        lastFetchParams, setLastFetchParams
-    } = useDashboard()
+    const { overviewData, setOverviewData, evolutionData, setEvolutionData, lastFetchParams, setLastFetchParams } = useDashboard()
 
     const [selectedMonth, setSelectedMonth] = useState(lastFetchParams?.month || new Date().getMonth() + 1 + "")
     const [selectedYear, setSelectedYear] = useState(lastFetchParams?.year || new Date().getFullYear() + "")
