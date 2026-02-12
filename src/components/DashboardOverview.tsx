@@ -4,56 +4,32 @@ import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis, Responsive
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
-import { getOverviewStats, getEvolutionRange } from "@/lib/dashboard.service"
-import { Loader2, DollarSign, Trophy, UtensilsCrossed, Disc } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { getOverviewStats, getEvolutionRange, getFullMonthReport } from "@/lib/dashboard.service"
+import { generateMonthlyPDF } from "@/lib/pdf-generator"
+import { Loader2, DollarSign, Trophy, UtensilsCrossed, Disc, FileDown } from "lucide-react"
 import { useEffect, useState, useMemo } from "react"
 import { useDashboard } from "@/context/DashboardContext"
 import { toast } from "sonner"
+import { months, years, ranges } from "@/utils/utils"
 
-const months = [
-    { value: "1", label: "Enero" },
-    { value: "2", label: "Febrero" },
-    { value: "3", label: "Marzo" },
-    { value: "4", label: "Abril" },
-    { value: "5", label: "Mayo" },
-    { value: "6", label: "Junio" },
-    { value: "7", label: "Julio" },
-    { value: "8", label: "Agosto" },
-    { value: "9", label: "Septiembre" },
-    { value: "10", label: "Octubre" },
-    { value: "11", label: "Noviembre" },
-    { value: "12", label: "Diciembre" },
-]
-
-const years = [
-    { value: "2024", label: "2024" },
-    { value: "2025", label: "2025" },
-    { value: "2026", label: "2026" },
-]
-
-const ranges = [
-    { value: "3", label: "Últimos 3 meses" },
-    { value: "6", label: "Últimos 6 meses" },
-    { value: "9", label: "Últimos 9 meses" },
-    { value: "12", label: "Últimos 12 meses" },
-]
 
 const chartConfig = {
     sports: {
         label: "Deportes",
-        color: "#10b981", // Emerald 500
+        color: "#10b981",
     },
     food: {
         label: "Gastronomía",
-        color: "#3b82f6", // Blue 500
+        color: "#3b82f6",
     },
     clothing: {
         label: "Indumentaria",
-        color: "#8b5cf6", // Violet 500
+        color: "#8b5cf6",
     },
     total: {
         label: "Ingreso Total",
-        color: "#0f172a", // Slate 900
+        color: "#0f172a",
     }
 } satisfies ChartConfig
 
@@ -69,6 +45,7 @@ export function DashboardOverview() {
     const [evolutionRange, setEvolutionRange] = useState(lastFetchParams?.evolutionRange || "12")
 
     const [loading, setLoading] = useState(!overviewData)
+    const [downloading, setDownloading] = useState(false)
 
     useEffect(() => {
         async function fetchData() {
@@ -106,6 +83,24 @@ export function DashboardOverview() {
         fetchData()
     }, [selectedMonth, selectedYear, evolutionRange])
 
+    const handleDownloadPDF = async () => {
+        setDownloading(true)
+        const res = await getFullMonthReport(parseInt(selectedYear), parseInt(selectedMonth))
+
+        if (res.success && res.data) {
+            try {
+                generateMonthlyPDF(res.data)
+                toast.success("PDF generado correctamente")
+            } catch (err) {
+                console.error(err)
+                toast.error("Error al generar el PDF")
+            }
+        } else {
+            toast.error("Error al obtener datos para el reporte")
+        }
+        setDownloading(false)
+    }
+
     const barChartData = useMemo(() => [
         { sector: "sports", value: overviewData?.sports || 0, fill: chartConfig.sports.color },
         { sector: "food", value: overviewData?.food || 0, fill: chartConfig.food.color },
@@ -126,24 +121,34 @@ export function DashboardOverview() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Panel Principal</h1>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 bg-background hover:bg-slate-50 transition-colors cursor-pointer"
+                        onClick={handleDownloadPDF}
+                        disabled={downloading}
+                    >
+                        {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                        Descargar PDF
+                    </Button>
                     <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                        <SelectTrigger className="w-[140px] bg-background">
+                        <SelectTrigger className="w-[140px] h-10 bg-background cursor-pointer">
                             <SelectValue placeholder="Mes" />
                         </SelectTrigger>
                         <SelectContent>
                             {months.map((m) => (
-                                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                                <SelectItem key={m.value} value={m.value} className="cursor-pointer">{m.label}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                     <Select value={selectedYear} onValueChange={setSelectedYear}>
-                        <SelectTrigger className="w-[100px] bg-background">
+                        <SelectTrigger className="w-[100px] h-10 bg-background cursor-pointer">
                             <SelectValue placeholder="Año" />
                         </SelectTrigger>
                         <SelectContent>
                             {years.map((y) => (
-                                <SelectItem key={y.value} value={y.value}>{y.label}</SelectItem>
+                                <SelectItem key={y.value} value={y.value} className="cursor-pointer">{y.label}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>

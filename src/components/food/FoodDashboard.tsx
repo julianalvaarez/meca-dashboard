@@ -2,45 +2,22 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import {
-    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, Cell
-} from "recharts"
-import {
-    getFoodStats, getFoodEvolutionRange
-} from "@/lib/food.service"
-import { FoodManagement } from "./FoodManagement"
-import {
-    UtensilsCrossed, TrendingUp, TrendingDown, DollarSign, Wallet, ArrowUpRight, ArrowDownRight, Loader2
-} from "lucide-react"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, Cell } from "recharts"
+import { getFoodStats, getFoodEvolutionRange } from "@/lib/food.service"
+import { UtensilsCrossed, TrendingUp, TrendingDown, DollarSign, Wallet, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from "@/components/ui/select"
-
-const months = [
-    { value: "1", label: "Enero" }, { value: "2", label: "Febrero" },
-    { value: "3", label: "Marzo" }, { value: "4", label: "Abril" },
-    { value: "5", label: "Mayo" }, { value: "6", label: "Junio" },
-    { value: "7", label: "Julio" }, { value: "8", label: "Agosto" },
-    { value: "9", label: "Septiembre" }, { value: "10", label: "Octubre" },
-    { value: "11", label: "Noviembre" }, { value: "12", label: "Diciembre" },
-]
-
-const years = ["2024", "2025", "2026"]
-const ranges = [
-    { value: "3", label: "Últimos 3 meses" },
-    { value: "6", label: "Últimos 6 meses" },
-    { value: "9", label: "Últimos 9 meses" },
-    { value: "12", label: "Últimos 12 meses" },
-]
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { months, years, ranges } from "@/utils/utils"
+import { FoodManagement } from "./FoodManagement"
+import { FoodsStats } from "@/types"
 
 export function FoodDashboard() {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
     const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString())
     const [evolutionRange, setEvolutionRange] = useState("12")
     const [loading, setLoading] = useState(true)
-    const [stats, setStats] = useState<any>(null)
-    const [prevStats, setPrevStats] = useState<any>(null)
+    const [stats, setStats] = useState<FoodsStats | null>(null)
+    const [prevStats, setPrevStats] = useState<FoodsStats | null>(null)
     const [evolution, setEvolution] = useState<any[]>([])
     const [refreshKey, setRefreshKey] = useState(0)
 
@@ -54,7 +31,6 @@ export function FoodDashboard() {
             getFoodStats(prevYear, prevMonth),
             getFoodEvolutionRange(parseInt(evolutionRange))
         ])
-
         if (statsRes.success) {
             setStats(statsRes.data)
         } else {
@@ -123,7 +99,7 @@ export function FoodDashboard() {
                 <div className="flex items-center gap-2">
                     <Select value={selectedYear} onValueChange={setSelectedYear}>
                         <SelectTrigger className="w-[100px]"><SelectValue placeholder="Año" /></SelectTrigger>
-                        <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+                        <SelectContent>{years.map(y => <SelectItem key={y.value} value={y.value}>{y.label}</SelectItem>)}</SelectContent>
                     </Select>
                     <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                         <SelectTrigger className="w-[130px]"><SelectValue placeholder="Mes" /></SelectTrigger>

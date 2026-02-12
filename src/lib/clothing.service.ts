@@ -3,13 +3,7 @@ import { supabase } from "./supabase";
 
 export async function getClothingStats(year: number, month: number) {
   try {
-    const { data, error } = await supabase
-      .from("clothing_stats")
-      .select("*")
-      .eq("year", year)
-      .eq("month", month)
-      .single()
-
+    const { data, error } = await supabase.from("clothing_stats").select("*").eq("year", year).eq("month", month).single()
     if (error && error.code !== "PGRST116") return { success: false, error: error.message }
     return { success: true, data }
   } catch (error) {
@@ -20,11 +14,7 @@ export async function getClothingStats(year: number, month: number) {
 
 export async function getAllClothingStats() {
   try {
-    const { data, error } = await supabase
-      .from("clothing_stats")
-      .select("*")
-      .order("year", { ascending: false })
-      .order("month", { ascending: false })
+    const { data, error } = await supabase.from("clothing_stats").select("*").order("year", { ascending: false }).order("month", { ascending: false })
 
     if (error) return { success: false, error: error.message }
     return { success: true, data }
@@ -36,12 +26,7 @@ export async function getAllClothingStats() {
 
 export async function getClothingEvolution(year: number) {
   try {
-    const { data, error } = await supabase
-      .from("clothing_stats")
-      .select("*")
-      .eq("year", year)
-      .order("month", { ascending: true })
-
+    const { data, error } = await supabase.from("clothing_stats").select("*").eq("year", year).order("month", { ascending: true })
     if (error) return { success: false, error: error.message }
     return { success: true, data }
   } catch (error) {
@@ -85,12 +70,7 @@ export async function deleteClothingStats(id: number) {
 
 export async function checkClothingStatsExistence(year: number, month: number) {
   try {
-    const { count, error } = await supabase
-      .from("clothing_stats")
-      .select("*", { count: "exact", head: true })
-      .eq("year", year)
-      .eq("month", month)
-
+    const { count, error } = await supabase.from("clothing_stats").select("*", { count: "exact", head: true }).eq("year", year).eq("month", month)
     if (error) return false
     return (count ?? 0) > 0
   } catch (error) {
@@ -100,12 +80,7 @@ export async function checkClothingStatsExistence(year: number, month: number) {
 
 export async function getClothingEvolutionRange(range: number) {
   try {
-    const { data, error } = await supabase
-      .from("clothing_stats")
-      .select("*")
-      .order("year", { ascending: false })
-      .order("month", { ascending: false })
-      .limit(range);
+    const { data, error } = await supabase.from("clothing_stats").select("*").order("year", { ascending: false }).order("month", { ascending: false }).limit(range);
 
     if (error) return { success: false, error: error.message };
 

@@ -35,6 +35,30 @@ export async function getOverviewStats(year: number, month: number) {
     }
 }
 
+export async function getFullMonthReport(year: number, month: number) {
+    try {
+        const [sports, food, clothing] = await Promise.all([
+            supabase.from("sports_stats").select("*").eq("year", year).eq("month", month),
+            supabase.from("food_stats").select("*").eq("year", year).eq("month", month),
+            supabase.from("clothing_stats").select("*").eq("year", year).eq("month", month),
+        ]);
+
+        return {
+            success: true,
+            data: {
+                sports: sports.data || [],
+                food: food.data || [],
+                clothing: clothing.data || [],
+                year,
+                month
+            }
+        };
+    } catch (error) {
+        console.error("Full Month Report Error:", error);
+        return { success: false, error: "Error al obtener reporte detallado" };
+    }
+}
+
 export async function getYearlyEvolution(year: number) {
     try {
         const [sports, food, clothing] = await Promise.all([

@@ -4,32 +4,23 @@ import { useState, useEffect, useMemo } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useDashboard } from "@/context/DashboardContext"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
 import { toast } from "sonner"
-import {
-    Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter
-} from "@/components/ui/dialog"
-import {
-    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-    AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
-} from "@/components/ui/alert-dialog"
+import * as z from "zod"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from "@/components/ui/select"
-import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow
-} from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-    getAllSportsStats, checkStatsExistence, saveSportsStats, deleteSportsRecord, updateSportsRecord
-} from "@/lib/sports_dashboard.service"
+import { getAllSportsStats, checkStatsExistence, saveSportsStats, deleteSportsRecord, updateSportsRecord } from "@/lib/sports_dashboard.service"
 import { Loader2, Plus, Pencil, Trash2, CalendarDays, Eye, AlertCircle, CheckCircle2 } from "lucide-react"
+import { months, years } from "@/utils/utils"
+import { EditValues, FormValues } from "@/types"
 
-const formSchema = z.object({
+export const formSchema = z.object({
     year: z.string().min(1, "Seleccione el año"),
     month: z.string().min(1, "Seleccione el mes"),
     padel_indoor_courts: z.coerce.number().min(0, "Mínimo 0"),
@@ -40,24 +31,11 @@ const formSchema = z.object({
     futbol_income: z.coerce.number().min(0, "Mínimo 0"),
 })
 
-const editSchema = z.object({
+export const editSchema = z.object({
     courts_rented: z.coerce.number().min(0, "Mínimo 0"),
     total_income: z.coerce.number().min(0, "Mínimo 0"),
 })
 
-type FormValues = z.infer<typeof formSchema>
-type EditValues = z.infer<typeof editSchema>
-
-const months = [
-    { value: "1", label: "Enero" }, { value: "2", label: "Febrero" },
-    { value: "3", label: "Marzo" }, { value: "4", label: "Abril" },
-    { value: "5", label: "Mayo" }, { value: "6", label: "Junio" },
-    { value: "7", label: "Julio" }, { value: "8", label: "Agosto" },
-    { value: "9", label: "Septiembre" }, { value: "10", label: "Octubre" },
-    { value: "11", label: "Noviembre" }, { value: "12", label: "Diciembre" },
-]
-
-const years = ["2024", "2025", "2026"]
 
 export function SportsManagement({ onRefresh }: { onRefresh: () => void }) {
     const { refresh: refreshDashboard } = useDashboard()
@@ -86,6 +64,9 @@ export function SportsManagement({ onRefresh }: { onRefresh: () => void }) {
             futbol_income: 0,
         }
     })
+    const editForm = useForm<EditValues>({
+        resolver: zodResolver(editSchema) as any,
+    })
 
     const watchYear = useWatch({ control: form.control, name: "year" })
     const watchMonth = useWatch({ control: form.control, name: "month" })
@@ -102,9 +83,6 @@ export function SportsManagement({ onRefresh }: { onRefresh: () => void }) {
         check()
     }, [watchYear, watchMonth])
 
-    const editForm = useForm<EditValues>({
-        resolver: zodResolver(editSchema) as any,
-    })
 
     const fetchRecords = async () => {
         setLoadingRecords(true)
@@ -273,7 +251,7 @@ export function SportsManagement({ onRefresh }: { onRefresh: () => void }) {
                                                 <FormControl>
                                                     <SelectTrigger><SelectValue placeholder="Año" /></SelectTrigger>
                                                 </FormControl>
-                                                <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+                                                <SelectContent>{years.map(y => <SelectItem key={y.value} value={y.value}>{y.label}</SelectItem>)}</SelectContent>
                                             </Select>
                                             <FormMessage />
                                         </FormItem>

@@ -1,7 +1,7 @@
-import { FoodDashboard } from "@/components/FoodDashboard"
+import { FoodDashboard } from "@/components/food/FoodDashboard"
 
 export const metadata = {
-  title: "Gastronomía | Meca Dashboard",
+  title: "Gastronomía | Meca Panel de Control",
   description: "Gestión y análisis de ingresos y gastos gastronómicos.",
 }
 

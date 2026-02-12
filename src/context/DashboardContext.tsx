@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, ReactNode } from "react"
+import { createContext, useContext, useState, ReactNode } from "react"
 
 interface DashboardContextType {
     overviewData: any
@@ -30,17 +30,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <DashboardContext.Provider
-            value={{
-                overviewData,
-                setOverviewData,
-                evolutionData,
-                setEvolutionData,
-                lastFetchParams,
-                setLastFetchParams,
-                refresh,
-            }}
-        >
+        <DashboardContext.Provider value={{ overviewData, setOverviewData, evolutionData, setEvolutionData, lastFetchParams, setLastFetchParams, refresh }}>
             {children}
         </DashboardContext.Provider>
     )

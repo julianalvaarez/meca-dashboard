@@ -1,42 +1,16 @@
 "use client"
 
+import { useEffect, useState, useCallback } from "react"
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
+import { toast } from "sonner"
+import { Loader2, Trophy } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { getDetailedSportsStats, getSportsEvolutionRange } from "@/lib/sports_dashboard.service"
-import { Loader2, Trophy } from "lucide-react"
-import { useEffect, useState, useCallback } from "react"
-import { toast } from "sonner"
+import { months, years, ranges } from "@/utils/utils"
 import { SportsManagement } from "./SportsManagement"
-
-const months = [
-    { value: "1", label: "Enero" },
-    { value: "2", label: "Febrero" },
-    { value: "3", label: "Marzo" },
-    { value: "4", label: "Abril" },
-    { value: "5", label: "Mayo" },
-    { value: "6", label: "Junio" },
-    { value: "7", label: "Julio" },
-    { value: "8", label: "Agosto" },
-    { value: "9", label: "Septiembre" },
-    { value: "10", label: "Octubre" },
-    { value: "11", label: "Noviembre" },
-    { value: "12", label: "Diciembre" },
-]
-
-const years = [
-    { value: "2024", label: "2024" },
-    { value: "2025", label: "2025" },
-    { value: "2026", label: "2026" },
-]
-
-const ranges = [
-    { value: "3", label: "Últimos 3 meses" },
-    { value: "6", label: "Últimos 6 meses" },
-    { value: "9", label: "Últimos 9 meses" },
-    { value: "12", label: "Últimos 12 meses" },
-]
+import { SportsStats } from "@/types"
 
 const chartConfig = {
     padel_indoor: {
@@ -58,7 +32,7 @@ export function SportsDashboard() {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear() + "")
     const [evolutionRange, setEvolutionRange] = useState("12")
 
-    const [stats, setStats] = useState<any>(null)
+    const [stats, setStats] = useState<SportsStats | null>(null)
     const [evolution, setEvolution] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [refreshKey, setRefreshKey] = useState(0)
@@ -69,9 +43,8 @@ export function SportsDashboard() {
             getDetailedSportsStats(parseInt(selectedYear), parseInt(selectedMonth)),
             getSportsEvolutionRange(parseInt(evolutionRange))
         ])
-
         if (statsRes.success) {
-            setStats(statsRes.data || [])
+            setStats(statsRes.data || null)
         } else {
             toast.error("Error al cargar estadísticas: " + (typeof statsRes.error === 'string' ? statsRes.error : "Error de conexión"))
         }
