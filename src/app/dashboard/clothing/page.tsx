@@ -1,6 +1,10 @@
+import { ClothingDashboard } from "@/components/ClothingDashboard"
 
-export default function Page() {
-  return (
-    <div>page</div>
-  )
+export const metadata = {
+  title: "Indumentaria | Meca Dashboard",
+  description: "Gestión y análisis de ventas de ropa y accesorios.",
+}
+
+export default function ClothingPage() {
+  return <ClothingDashboard />
 }

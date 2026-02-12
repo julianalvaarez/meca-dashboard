@@ -1,6 +1,5 @@
+import { SportsDashboard } from "@/components/SportsDashboard";
 
-export default function Page() {
-  return (
-    <div>page</div>
-  )
+export default function SportsPage() {
+  return <SportsDashboard />;
 }
