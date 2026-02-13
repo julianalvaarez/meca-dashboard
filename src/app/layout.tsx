@@ -31,5 +31,5 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 }
 
 export const viewport = {
-  themeColor: "#000000",
+  themeColor: "#000",
 };
