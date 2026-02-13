@@ -9,8 +9,43 @@
     "orientation": "portrait",
     "icons": [
         {
-            "src": "/imeca-logo.png",
+            "src": "/meca-logo.png",
             "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "/meca-logo.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/meca-logo.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        },
+        {
+            "src": "/meca-logo.png",
+            "sizes": "167x167",
+            "type": "image/png"
+        },
+        {
+            "src": "/meca-logo.png",
+            "sizes": "152x152",
+            "type": "image/png"
+        },
+        {
+            "src": "/meca-logo.png",
+            "sizes": "128x128",
+            "type": "image/png"
+        },
+        {
+            "src": "/meca-logo.png",
+            "sizes": "64x64",
+            "type": "image/png"
+        },
+        {
+            "src": "/meca-logo.png",
+            "sizes": "32x32",
             "type": "image/png"
         }
     ]
