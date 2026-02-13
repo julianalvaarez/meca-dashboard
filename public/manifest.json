@@ -1,0 +1,17 @@
+{
+    "name": "Panel de Control Meca CDA",
+    "short_name": "La Meca CDA",
+    "description": "Panel de gestión del complejo deportivo de La Meca Club de AMigos",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/imeca-logo.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
