@@ -2,21 +2,18 @@ import { supabase } from "./supabase";
 
 export async function getOverviewStats(year: number, month: number) {
     try {
-        const [sports, food, clothing] = await Promise.all([
+        const [sports, foodIncome, foodExpenses, clothing] = await Promise.all([
             supabase.from("sports_stats").select("total_income").eq("year", year).eq("month", month),
-            supabase.from("food_stats").select("total_income, total_expense").eq("year", year).eq("month", month),
+            supabase.from("food_monthly_income").select("total_income").eq("year", year).eq("month", month),
+            supabase.from("food_monthly_expenses").select("amount").eq("year", year).eq("month", month),
             supabase.from("clothing_stats").select("total_income").eq("year", year).eq("month", month),
         ]);
 
-        if (sports.error || food.error || clothing.error) {
-            console.error("Supabase Error:", { sports: sports.error, food: food.error, clothing: clothing.error });
-        }
-
         const sportsIncome = sports.data?.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0) || 0;
 
-        // Use net income for food (Total Income - Total Expense)
-        const foodNetIncome = food.data?.reduce((acc, curr) =>
-            acc + (Number(curr.total_income || 0) - Number(curr.total_expense || 0)), 0) || 0;
+        const fIncome = foodIncome.data?.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0) || 0;
+        const fExpenses = foodExpenses.data?.reduce((acc, curr) => acc + Number(curr.amount || 0), 0) || 0;
+        const foodNetIncome = fIncome - fExpenses;
 
         const clothingIncome = clothing.data?.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0) || 0;
 
@@ -37,9 +34,10 @@ export async function getOverviewStats(year: number, month: number) {
 
 export async function getFullMonthReport(year: number, month: number) {
     try {
-        const [sports, food, clothing] = await Promise.all([
+        const [sports, foodIncome, foodExpenses, clothing] = await Promise.all([
             supabase.from("sports_stats").select("*").eq("year", year).eq("month", month),
-            supabase.from("food_stats").select("*").eq("year", year).eq("month", month),
+            supabase.from("food_monthly_income").select("*").eq("year", year).eq("month", month),
+            supabase.from("food_monthly_expenses").select("*").eq("year", year).eq("month", month),
             supabase.from("clothing_stats").select("*").eq("year", year).eq("month", month),
         ]);
 
@@ -47,7 +45,10 @@ export async function getFullMonthReport(year: number, month: number) {
             success: true,
             data: {
                 sports: sports.data || [],
-                food: food.data || [],
+                food: {
+                    income: foodIncome.data || [],
+                    expenses: foodExpenses.data || []
+                },
                 clothing: clothing.data || [],
                 year,
                 month
@@ -61,9 +62,10 @@ export async function getFullMonthReport(year: number, month: number) {
 
 export async function getYearlyEvolution(year: number) {
     try {
-        const [sports, food, clothing] = await Promise.all([
+        const [sports, foodIncome, foodExpenses, clothing] = await Promise.all([
             supabase.from("sports_stats").select("total_income, month").eq("year", year),
-            supabase.from("food_stats").select("total_income, total_expense, month").eq("year", year),
+            supabase.from("food_monthly_income").select("total_income, month").eq("year", year),
+            supabase.from("food_monthly_expenses").select("amount, month").eq("year", year),
             supabase.from("clothing_stats").select("total_income, month").eq("year", year),
         ]);
 
@@ -82,10 +84,15 @@ export async function getYearlyEvolution(year: number) {
             monthlyData[item.month - 1].total += income;
         });
 
-        food.data?.forEach(item => {
-            const netIncome = Number(item.total_income || 0) - Number(item.total_expense || 0);
-            monthlyData[item.month - 1].food += netIncome;
-            monthlyData[item.month - 1].total += netIncome;
+        // Food Income
+        foodIncome.data?.forEach(item => {
+            monthlyData[item.month - 1].food += Number(item.total_income || 0);
+            monthlyData[item.month - 1].total += Number(item.total_income || 0);
+        });
+        // Food Expenses (Subtract)
+        foodExpenses.data?.forEach(item => {
+            monthlyData[item.month - 1].food -= Number(item.amount || 0);
+            monthlyData[item.month - 1].total -= Number(item.amount || 0);
         });
 
         clothing.data?.forEach(item => {
@@ -103,9 +110,10 @@ export async function getYearlyEvolution(year: number) {
 
 export async function getEvolutionRange(range: number) {
     try {
-        const [sports, food, clothing] = await Promise.all([
+        const [sports, foodIncome, foodExpenses, clothing] = await Promise.all([
             supabase.from("sports_stats").select("total_income, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range * 3),
-            supabase.from("food_stats").select("total_income, total_expense, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range),
+            supabase.from("food_monthly_income").select("total_income, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range),
+            supabase.from("food_monthly_expenses").select("amount, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range * 4),
             supabase.from("clothing_stats").select("total_income, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range),
         ]);
 
@@ -118,12 +126,18 @@ export async function getEvolutionRange(range: number) {
             grouped[key].total += Number(item.total_income || 0);
         });
 
-        food.data?.forEach(item => {
+        foodIncome.data?.forEach(item => {
             const key = `${item.year}-${item.month}`;
             if (!grouped[key]) grouped[key] = { year: item.year, month: item.month, sports: 0, food: 0, clothing: 0, total: 0 };
-            const netIncome = Number(item.total_income || 0) - Number(item.total_expense || 0);
-            grouped[key].food += netIncome;
-            grouped[key].total += netIncome;
+            grouped[key].food += Number(item.total_income || 0);
+            grouped[key].total += Number(item.total_income || 0);
+        });
+
+        foodExpenses.data?.forEach(item => {
+            const key = `${item.year}-${item.month}`;
+            if (!grouped[key]) grouped[key] = { year: item.year, month: item.month, sports: 0, food: 0, clothing: 0, total: 0 };
+            grouped[key].food -= Number(item.amount || 0);
+            grouped[key].total -= Number(item.amount || 0);
         });
 
         clothing.data?.forEach(item => {

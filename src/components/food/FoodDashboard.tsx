@@ -3,49 +3,46 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, Cell } from "recharts"
-import { getFoodStats, getFoodEvolutionRange } from "@/lib/food.service"
-import { UtensilsCrossed, TrendingUp, TrendingDown, DollarSign, Wallet, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react"
+import { getCurrentMonthFoodStats, getFoodEvolution } from "@/lib/food.service"
+import { UtensilsCrossed, TrendingUp, TrendingDown, DollarSign, Wallet, ArrowUpRight, ArrowDownRight, Loader2, Landmark, Users } from "lucide-react"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { months, years, ranges } from "@/utils/utils"
 import { FoodManagement } from "./FoodManagement"
-import { FoodsStats } from "@/types"
+import { FoodStats } from "@/types"
 
 export function FoodDashboard() {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
     const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString())
     const [evolutionRange, setEvolutionRange] = useState("12")
     const [loading, setLoading] = useState(true)
-    const [stats, setStats] = useState<FoodsStats | null>(null)
-    const [prevStats, setPrevStats] = useState<FoodsStats | null>(null)
+    const [stats, setStats] = useState<FoodStats | null>(null)
     const [evolution, setEvolution] = useState<any[]>([])
     const [refreshKey, setRefreshKey] = useState(0)
 
     const fetchData = useCallback(async () => {
         setLoading(true)
-        const prevMonth = parseInt(selectedMonth) === 1 ? 12 : parseInt(selectedMonth) - 1
-        const prevYear = parseInt(selectedMonth) === 1 ? parseInt(selectedYear) - 1 : parseInt(selectedYear)
+        try {
+            const [statsRes, evolutionRes] = await Promise.all([
+                getCurrentMonthFoodStats(parseInt(selectedYear), parseInt(selectedMonth)),
+                getFoodEvolution(parseInt(evolutionRange))
+            ])
 
-        const [statsRes, prevStatsRes, evolutionRes] = await Promise.all([
-            getFoodStats(parseInt(selectedYear), parseInt(selectedMonth)),
-            getFoodStats(prevYear, prevMonth),
-            getFoodEvolutionRange(parseInt(evolutionRange))
-        ])
-        if (statsRes.success) {
-            setStats(statsRes.data)
-        } else {
-            toast.error("Error al cargar estadísticas")
+            if (statsRes.success) {
+                setStats(statsRes.data || null)
+            } else {
+                toast.error("Error al cargar estadísticas")
+            }
+
+            if (evolutionRes.success) {
+                setEvolution(evolutionRes.data || [])
+            }
+        } catch (error) {
+            console.error("fetchData Error:", error)
+            toast.error("Error de conexión al cargar datos")
+        } finally {
+            setLoading(false)
         }
-
-        if (prevStatsRes.success) {
-            setPrevStats(prevStatsRes.data)
-        }
-
-        if (evolutionRes.success) {
-            setEvolution(evolutionRes.data || [])
-        }
-
-        setLoading(false)
     }, [selectedMonth, selectedYear, evolutionRange])
 
     useEffect(() => {
@@ -53,35 +50,59 @@ export function FoodDashboard() {
     }, [fetchData, refreshKey])
 
     const kpis = useMemo(() => {
-        if (!stats) return null
-
-        const income = Number(stats.total_income)
-        const expense = Number(stats.total_expense)
-        const net = income - expense
-
-        let variation = 0
-        if (prevStats) {
-            const prevNet = Number(prevStats.total_income) - Number(prevStats.total_expense)
-            if (prevNet !== 0) {
-                variation = ((net - prevNet) / Math.abs(prevNet)) * 100
-            } else if (net > 0) {
-                variation = 100
-            }
+        return {
+            income: stats?.income || 0,
+            expense: stats?.expenses?.total || 0,
+            net: stats?.netIncome || 0,
+            variation: stats?.variation || 0
         }
+    }, [stats])
 
-        return { income, expense, net, variation }
-    }, [stats, prevStats])
+    const expenseBreakdown = useMemo(() => {
+        if (!stats) return []
+        const total = stats.expenses.total > 0 ? stats.expenses.total : 1
+        return [
+            {
+                label: "Materia Prima",
+                amount: stats.expenses.materia_prima,
+                percentage: (stats.expenses.materia_prima / total) * 100,
+                icon: UtensilsCrossed,
+                color: "text-rose-600",
+                bgColor: "bg-rose-50"
+            },
+            {
+                label: "Sueldos",
+                amount: stats.expenses.sueldos,
+                percentage: (stats.expenses.sueldos / total) * 100,
+                icon: Users,
+                color: "text-blue-600",
+                bgColor: "bg-blue-50"
+            },
+            {
+                label: "Impuestos",
+                amount: stats.expenses.impuestos,
+                percentage: (stats.expenses.impuestos / total) * 100,
+                icon: Landmark,
+                color: "text-amber-600",
+                bgColor: "bg-amber-50"
+            },
+        ]
+    }, [stats])
 
     const chartData = useMemo(() => {
         return evolution.map(item => ({
-            name: months.find(m => m.value === item.month.toString())?.label.substring(0, 3),
-            ingresos: Number(item.total_income),
-            gastos: Number(item.total_expense),
-            neto: Number(item.total_income) - Number(item.total_expense)
+            name: item.name,
+            ingresos: Number(item.total_income || 0),
+            gastos: Number(item.expenses?.total || 0),
+            "Materia Prima": Number(item.expenses?.materia_prima || 0),
+            "Sueldos": Number(item.expenses?.sueldos || 0),
+            "Impuestos": Number(item.expenses?.impuestos || 0),
+            "Otros": Number(item.expenses?.otros || 0),
+            neto: Number(item.net_income || 0)
         }))
     }, [evolution])
 
-    if (loading && !stats && evolution.length === 0) {
+    if (loading && evolution.length === 0) {
         return (
             <div className="flex h-[80vh] items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -94,7 +115,7 @@ export function FoodDashboard() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Gastronomía</h1>
-                    <p className="text-muted-foreground">Monitoreo de ingresos y costos de materia prima.</p>
+                    <p className="text-muted-foreground">Gestión financiera y desglose de costos operativos.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -108,7 +129,7 @@ export function FoodDashboard() {
                 </div>
             </div>
 
-            {/* KPIs */}
+            {/* KPIs Principales */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="border-none shadow-md bg-gradient-to-br from-white to-emerald-50/30">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -116,113 +137,161 @@ export function FoodDashboard() {
                         <DollarSign className="h-4 w-4 text-emerald-600" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-emerald-700">${kpis?.income.toLocaleString() ?? 0}</div>
+                        <div className="text-2xl font-bold text-emerald-700">${kpis.income.toLocaleString()}</div>
                         <p className="text-xs text-emerald-600/70 mt-1">Ventas totales registradas</p>
                     </CardContent>
                 </Card>
 
                 <Card className="border-none shadow-md bg-gradient-to-br from-white to-rose-50/30">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground text-rose-700">Gastos (Materia Prima)</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground text-rose-700">Gastos Totales</CardTitle>
                         <Wallet className="h-4 w-4 text-rose-600" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-rose-700">${kpis?.expense.toLocaleString() ?? 0}</div>
-                        <p className="text-xs text-rose-600/70 mt-1">Costo de insumos del período</p>
+                        <div className="text-2xl font-bold text-rose-700">${kpis.expense.toLocaleString()}</div>
+                        <p className="text-xs text-rose-600/70 mt-1">Suma de todas las categorías</p>
                     </CardContent>
                 </Card>
 
                 <Card className="border-none shadow-md bg-gradient-to-br from-white to-blue-50/30">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground text-blue-700">Ingreso Neto</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-blue-600" />
+                        <Landmark className="h-4 w-4 text-blue-600" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-blue-700">${kpis?.net.toLocaleString() ?? 0}</div>
-                        <p className="text-xs text-blue-600/70 mt-1">Beneficio antes de otros gastos</p>
+                        <div className="text-2xl font-bold text-blue-700">${kpis.net.toLocaleString()}</div>
+                        <p className="text-xs text-blue-600/70 mt-1">Utilidad del período</p>
                     </CardContent>
                 </Card>
 
                 <Card className="border-none shadow-md bg-gradient-to-br from-white to-amber-50/30">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground text-amber-700">Variación vs Mes Ant.</CardTitle>
-                        {kpis && kpis.variation >= 0 ? <TrendingUp className="h-4 w-4 text-emerald-500" /> : <TrendingDown className="h-4 w-4 text-rose-500" />}
+                        <CardTitle className="text-sm font-medium text-muted-foreground text-amber-700">Variación Neta</CardTitle>
+                        {kpis.variation >= 0 ? <TrendingUp className="h-4 w-4 text-emerald-500" /> : <TrendingDown className="h-4 w-4 text-rose-500" />}
                     </CardHeader>
                     <CardContent>
-                        <div className={`text-2xl font-bold ${kpis && kpis.variation >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {kpis?.variation.toFixed(1)}%
+                        <div className={`text-2xl font-bold ${kpis.variation >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {kpis.variation.toFixed(1)}%
                         </div>
                         <div className="flex items-center gap-1 mt-1">
-                            {kpis && kpis.variation >= 0 ? (
-                                <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-                            ) : (
-                                <ArrowDownRight className="h-3 w-3 text-rose-500" />
-                            )}
-                            <span className="text-xs text-muted-foreground">En rendimiento neto</span>
+                            <span className="text-xs text-muted-foreground font-medium">vs mes anterior</span>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Charts */}
+            {/* Desglose de Gastos (Cards) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {expenseBreakdown.length > 0 ? (
+                    expenseBreakdown.map((item) => (
+                        <Card key={item.label} className="border-none shadow-sm overflow-hidden">
+                            <CardContent className="p-0">
+                                <div className="flex items-center p-4 gap-4">
+                                    <div className={`p-3 rounded-xl ${item.bgColor}`}>
+                                        <item.icon className={`h-6 w-6 ${item.color}`} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium text-muted-foreground">{item.label}</p>
+                                        <div className="flex items-baseline gap-2">
+                                            <h3 className="text-xl font-bold">${item.amount.toLocaleString()}</h3>
+                                            <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-muted">
+                                                {item.percentage.toFixed(1)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="h-1.5 w-full bg-muted">
+                                    <div
+                                        className={`h-full ${item.color.replace('text', 'bg')}`}
+                                        style={{ width: `${item.percentage}%` }}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))
+                ) : (
+                    <div className="col-span-3 py-10 text-center bg-muted/20 rounded-xl border border-dashed text-muted-foreground">
+                        No hay desglose de gastos disponible para este mes.
+                    </div>
+                )}
+            </div>
+
+            {/* Gráficos */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="border-none shadow-lg overflow-hidden">
-                    <CardHeader className="flex flex-row items-center justify-between bg-muted/20 pb-4">
-                        <div>
-                            <CardTitle className="text-lg">Ingresos vs Gastos</CardTitle>
-                            <CardDescription>Evolución de ventas y costos.</CardDescription>
-                        </div>
-                        <Select value={evolutionRange} onValueChange={setEvolutionRange}>
-                            <SelectTrigger className="w-[180px] h-8"><SelectValue placeholder="Rango" /></SelectTrigger>
-                            <SelectContent>{ranges.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
-                        </Select>
+                    <CardHeader className="bg-muted/10 pb-4">
+                        <CardTitle className="text-lg">Desglose de Gastos por Mes</CardTitle>
+                        <CardDescription>Visualización segmentada de costos operativos.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-6">
-                        <div className="h-[300px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 12 }} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 12 }} tickFormatter={(value) => `$${value / 1000}k`} />
-                                    <Tooltip
-                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                        formatter={(value) => [`$${Number(value).toLocaleString()}`, '']}
-                                    />
-                                    <Legend verticalAlign="top" height={36} />
-                                    <Line type="monotone" dataKey="ingresos" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }} name="Ingresos" />
-                                    <Line type="monotone" dataKey="gastos" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, fill: '#f43f5e' }} activeDot={{ r: 6 }} name="Gastos" />
-                                </LineChart>
-                            </ResponsiveContainer>
+                        <div className="h-[350px] w-full">
+                            {chartData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 12 }} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 12 }} tickFormatter={(value) => `$${value / 1000}k`} />
+                                        <Tooltip
+                                            cursor={{ fill: '#f8fafc' }}
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                            formatter={(value) => [`$${Number(value).toLocaleString()}`, '']}
+                                        />
+                                        <Legend verticalAlign="top" height={36} iconType="circle" />
+                                        <Bar dataKey="Materia Prima" stackId="a" fill="#f43f5e" />
+                                        <Bar dataKey="Sueldos" stackId="a" fill="#3b82f6" />
+                                        <Bar dataKey="Impuestos" stackId="a" fill="#f59e0b" />
+                                        <Bar dataKey="Otros" stackId="a" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-muted-foreground">No hay datos históricos disponibles</div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
 
                 <Card className="border-none shadow-lg overflow-hidden">
-                    <CardHeader className="flex flex-row items-center justify-between bg-muted/20 pb-4">
+                    <CardHeader className="bg-muted/10 flex flex-row items-center justify-between pb-4">
                         <div>
-                            <CardTitle className="text-lg">Ganancia Neta Mensual</CardTitle>
-                            <CardDescription>Resultado final después de costos directos.</CardDescription>
+                            <CardTitle className="text-lg">Evolución Ingreso Neto</CardTitle>
+                            <CardDescription>Utilidad mensual neta (Ingresos - Gastos).</CardDescription>
                         </div>
-                        <div className="text-xs font-bold text-primary">Histórico</div>
+                        <Select value={evolutionRange} onValueChange={setEvolutionRange}>
+                            <SelectTrigger className="w-[150px] bg-white h-8 text-xs font-medium">
+                                <SelectValue placeholder="Rango" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ranges.map(r => <SelectItem key={r.value} value={r.value} className="text-xs">{r.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </CardHeader>
                     <CardContent className="pt-6">
-                        <div className="h-[300px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 12 }} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 12 }} tickFormatter={(value) => `$${value / 1000}k`} />
-                                    <Tooltip
-                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                        formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Ganancia']}
-                                    />
-                                    <Bar dataKey="neto" radius={[4, 4, 0, 0]}>
-                                        {chartData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.neto >= 0 ? "#3b82f6" : "#f43f5e"} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <div className="h-[350px] w-full">
+                            {chartData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={chartData}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 12 }} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 12 }} tickFormatter={(value) => `$${value / 1000}k`} />
+                                        <Tooltip
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                            formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Neto']}
+                                        />
+                                        <Legend verticalAlign="top" height={36} />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="neto"
+                                            stroke="#3b82f6"
+                                            strokeWidth={3}
+                                            dot={{ r: 4, fill: '#3b82f6' }}
+                                            activeDot={{ r: 6 }}
+                                            name="Ingreso Neto"
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-muted-foreground">No hay datos históricos disponibles</div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

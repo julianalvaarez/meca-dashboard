@@ -10,13 +10,38 @@ export type SportStats = {
   total_income: number;
 }
 
-export type FoodStats = {
-  id?: number;
+export type FoodIncome = {
+  id?: string;
   year: number;
   month: number;
   total_income: number;
-  total_expense: number;
+  created_at?: string;
 }
+
+export type ExpenseCategory = 'materia_prima' | 'sueldos' | 'impuestos' | 'otros';
+
+export type FoodExpense = {
+  id?: string;
+  year: number;
+  month: number;
+  category: ExpenseCategory;
+  amount: number;
+  created_at?: string;
+}
+
+export type FoodStats = {
+  income: number;
+  expenses: {
+    materia_prima: number;
+    sueldos: number;
+    impuestos: number;
+    otros: number;
+    total: number;
+  };
+  netIncome: number;
+  variation?: number;
+}
+
 
 export type ClothingStats = {
   id?: number;

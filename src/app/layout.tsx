@@ -13,7 +13,8 @@ export const metadata: Metadata = {
     title: "La Meca CDA"
   },
   icons: {
-    apple: "/meca-logo.png"
+    apple: "/meca-logo.png",
+    icon: "/meca-logo.png",
   }
 };
 
