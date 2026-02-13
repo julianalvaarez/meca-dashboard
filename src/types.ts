@@ -84,3 +84,29 @@ export type FoodsStats = {
 
 export type FormValues = z.infer<typeof formSchema>
 export type EditValues = z.infer<typeof editSchema>
+
+export type Tenant = {
+  id: string;
+  name: string;
+  created_at?: string;
+}
+
+export type TenantMonthlyIncome = {
+  id?: string;
+  tenant_id: string;
+  year: number;
+  month: number;
+  total_income: number;
+  created_at?: string;
+  tenants?: { name: string }; // For joins
+}
+
+export type TenantStats = {
+  totalIncome: number;
+  tenants: {
+    id: string;
+    name: string;
+    income: number;
+  }[];
+  variation?: number;
+}

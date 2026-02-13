@@ -28,6 +28,7 @@ import {
     getAllClothingStats, checkClothingStatsExistence, addClothingStats, deleteClothingStats, updateClothingStats
 } from "@/lib/clothing.service"
 import { Loader2, Plus, Pencil, Trash2, Shirt, AlertCircle, CheckCircle2 } from "lucide-react"
+import { defaultMonth, defaultYear } from "@/utils/utils"
 
 const formSchema = z.object({
     year: z.string().min(1, "Seleccione el año"),
@@ -61,8 +62,8 @@ export function ClothingManagement({ onRefresh }: { onRefresh: () => void }) {
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema) as any,
         defaultValues: {
-            year: new Date().getFullYear().toString(),
-            month: (new Date().getMonth() + 1).toString(),
+            year: defaultYear,
+            month: defaultMonth,
             total_income: 0,
         }
     })

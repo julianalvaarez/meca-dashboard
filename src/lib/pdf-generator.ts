@@ -10,6 +10,7 @@ export function generateMonthlyPDF(data: {
     sports: any[],
     food: { income: any[], expenses: any[] },
     clothing: any[],
+    tenants: any[],
     year: number,
     month: number
 }) {
@@ -39,7 +40,8 @@ export function generateMonthlyPDF(data: {
     const foodNet = foodIncomeTotal - foodExpenseTotal
 
     const clothingTotal = data.clothing.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
-    const grandTotal = sportsTotal + foodNet + clothingTotal
+    const tenantsTotal = data.tenants.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
+    const grandTotal = sportsTotal + foodNet + clothingTotal + tenantsTotal
 
     doc.setFontSize(14)
     doc.text("Resumen (Ingresos Netos)", 20, currentY)
@@ -52,6 +54,7 @@ export function generateMonthlyPDF(data: {
             ['Deportes', 'Alquiler de canchas', `$${sportsTotal.toLocaleString()}`],
             ['Gastronomía', 'Ingreso Neto (Ventas - Costos)', `$${foodNet.toLocaleString()}`],
             ['Indumentaria', 'Venta de productos', `$${clothingTotal.toLocaleString()}`],
+            ['Inquilinos', 'Rentas y alquileres', `$${tenantsTotal.toLocaleString()}`],
             ['TOTAL', 'Balance Final del Mes', `$${grandTotal.toLocaleString()}`],
         ],
         theme: 'striped',
@@ -106,6 +109,24 @@ export function generateMonthlyPDF(data: {
 
     currentY = (doc as any).lastAutoTable.finalY + 15
 
+    // Detailed Tenants Section
+    doc.setFontSize(14)
+    doc.text("Detalle: Inquilinos", 20, currentY)
+    currentY += 5
+
+    autoTable(doc, {
+        startY: currentY,
+        head: [['Inquilino', 'Monto']],
+        body: data.tenants.map(t => [
+            t.tenants?.name || 'Inquilino',
+            `$${Number(t.total_income).toLocaleString()}`
+        ]),
+        headStyles: { fillColor: [236, 72, 153] as any }, // Pink 500
+        styles: { fontSize: 9 }
+    })
+
+    currentY = (doc as any).lastAutoTable.finalY + 15
+
     // Detailed Clothing Section
     doc.setFontSize(14)
     doc.text("Detalle: Indumentaria", 20, currentY)
@@ -132,3 +153,4 @@ export function generateMonthlyPDF(data: {
 
     doc.save(`Reporte_Meca_${monthName}_${data.year}.pdf`)
 }
+

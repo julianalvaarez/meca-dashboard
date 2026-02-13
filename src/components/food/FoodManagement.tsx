@@ -28,6 +28,7 @@ import {
     getFoodEvolution, upsertFoodIncome, addFoodExpense, clearMonthlyExpenses
 } from "@/lib/food.service"
 import { Loader2, Plus, Pencil, Trash2, UtensilsCrossed, AlertCircle } from "lucide-react"
+import { defaultMonth, defaultYear } from "@/utils/utils"
 import { ExpenseCategory } from "@/types"
 
 const formSchema = z.object({
@@ -64,8 +65,8 @@ export function FoodManagement({ onRefresh }: { onRefresh: () => void }) {
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema) as any,
         defaultValues: {
-            year: new Date().getFullYear().toString(),
-            month: (new Date().getMonth() + 1).toString(),
+            year: defaultYear,
+            month: defaultMonth,
             total_income: 0,
             materia_prima: 0,
             sueldos: 0,

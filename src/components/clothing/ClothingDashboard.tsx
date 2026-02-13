@@ -7,13 +7,13 @@ import { getClothingStats, getClothingEvolutionRange } from "@/lib/clothing.serv
 import { Shirt, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { months, years, ranges } from "@/utils/utils"
+import { months, years, ranges, defaultMonth, defaultYear } from "@/utils/utils"
 import { ClothingManagement } from "./ClothingManagement"
 import { ClothingsStats } from "@/types"
 
 export function ClothingDashboard() {
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
-    const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString())
+    const [selectedYear, setSelectedYear] = useState(defaultYear)
+    const [selectedMonth, setSelectedMonth] = useState(defaultMonth)
     const [evolutionRange, setEvolutionRange] = useState("12")
     const [loading, setLoading] = useState(true)
     const [stats, setStats] = useState<ClothingsStats | null>(null)

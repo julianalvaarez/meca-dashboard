@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getAllSportsStats, checkStatsExistence, saveSportsStats, deleteSportsRecord, updateSportsRecord } from "@/lib/sports_dashboard.service"
 import { Loader2, Plus, Pencil, Trash2, CalendarDays, Eye, AlertCircle, CheckCircle2 } from "lucide-react"
-import { months, years } from "@/utils/utils"
+import { months, years, defaultMonth, defaultYear } from "@/utils/utils"
 import { EditValues, FormValues } from "@/types"
 
 export const formSchema = z.object({
@@ -54,8 +54,8 @@ export function SportsManagement({ onRefresh }: { onRefresh: () => void }) {
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema) as any,
         defaultValues: {
-            year: new Date().getFullYear().toString(),
-            month: (new Date().getMonth() + 1).toString(),
+            year: defaultYear,
+            month: defaultMonth,
             padel_indoor_courts: 0,
             padel_indoor_income: 0,
             padel_outdoor_courts: 0,

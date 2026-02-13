@@ -27,3 +27,8 @@ export const ranges = [
     { value: "9", label: "Últimos 9 meses" },
     { value: "12", label: "Últimos 12 meses" },
 ]
+
+const prevDate = new Date()
+prevDate.setMonth(prevDate.getMonth() - 1)
+export const defaultMonth = (prevDate.getMonth() + 1).toString()
+export const defaultYear = prevDate.getFullYear().toString()

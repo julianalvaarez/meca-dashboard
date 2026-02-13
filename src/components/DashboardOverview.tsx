@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "
 import { Button } from "@/components/ui/button"
 import { getOverviewStats, getEvolutionRange, getFullMonthReport } from "@/lib/dashboard.service"
 import { generateMonthlyPDF } from "@/lib/pdf-generator"
-import { Loader2, DollarSign, Trophy, UtensilsCrossed, Disc, FileDown } from "lucide-react"
+import { Loader2, DollarSign, Trophy, UtensilsCrossed, Disc, FileDown, Users } from "lucide-react"
 import { useEffect, useState, useMemo } from "react"
 import { useDashboard } from "@/context/DashboardContext"
 import { toast } from "sonner"
-import { months, years, ranges } from "@/utils/utils"
+import { months, years, ranges, defaultMonth, defaultYear } from "@/utils/utils"
 
 
 const chartConfig = {
@@ -27,6 +27,10 @@ const chartConfig = {
         label: "Indumentaria",
         color: "#8b5cf6",
     },
+    tenants: {
+        label: "Inquilinos",
+        color: "#ec4899",
+    },
     total: {
         label: "Ingreso Total",
         color: "#0f172a",
@@ -34,10 +38,11 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function DashboardOverview() {
+    // ... items omitted for brevity in instruction, using actual code below ...
     const { overviewData, setOverviewData, evolutionData, setEvolutionData, lastFetchParams, setLastFetchParams } = useDashboard()
 
-    const [selectedMonth, setSelectedMonth] = useState(lastFetchParams?.month || new Date().getMonth() + 1 + "")
-    const [selectedYear, setSelectedYear] = useState(lastFetchParams?.year || new Date().getFullYear() + "")
+    const [selectedMonth, setSelectedMonth] = useState(lastFetchParams?.month || defaultMonth)
+    const [selectedYear, setSelectedYear] = useState(lastFetchParams?.year || defaultYear)
     const [evolutionRange, setEvolutionRange] = useState(lastFetchParams?.evolutionRange || "12")
 
     const [loading, setLoading] = useState(!overviewData)
@@ -101,6 +106,7 @@ export function DashboardOverview() {
         { sector: "sports", value: overviewData?.sports || 0, fill: chartConfig.sports.color },
         { sector: "food", value: overviewData?.food || 0, fill: chartConfig.food.color },
         { sector: "clothing", value: overviewData?.clothing || 0, fill: chartConfig.clothing.color },
+        { sector: "tenants", value: overviewData?.tenants || 0, fill: chartConfig.tenants.color },
     ], [overviewData])
 
     if (loading && !overviewData) {
@@ -151,52 +157,62 @@ export function DashboardOverview() {
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
                 <Card className="overflow-hidden border-none shadow-md transition-all hover:shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-primary/5">
-                        <CardTitle className="text-sm font-bold uppercase tracking-wider text-primary/70">Balance Total</CardTitle>
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-primary/70">Balance Total</CardTitle>
                         <DollarSign className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent className="pt-4">
-                        <div className="text-2xl font-bold">${overviewData?.total?.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground mt-1">Ingresos netos combinados</p>
+                        <div className="text-xl font-bold">${overviewData?.total?.toLocaleString()}</div>
+                        <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">Ingresos netos combinados</p>
                     </CardContent>
                 </Card>
                 <Card className="overflow-hidden border-none shadow-md transition-all hover:shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-emerald-500/5">
-                        <CardTitle className="text-sm font-bold uppercase tracking-wider text-emerald-600">Deportes</CardTitle>
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-emerald-600">Deportes</CardTitle>
                         <Trophy className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent className="pt-4">
-                        <div className="text-2xl font-bold text-emerald-700">${overviewData?.sports?.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground mt-1">Alquiler de canchas</p>
+                        <div className="text-xl font-bold text-emerald-700">${overviewData?.sports?.toLocaleString()}</div>
+                        <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">Alquiler de canchas</p>
                     </CardContent>
                 </Card>
                 <Card className="overflow-hidden border-none shadow-md transition-all hover:shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-blue-500/5">
-                        <CardTitle className="text-sm font-bold uppercase tracking-wider text-blue-600">Gastronomía (Neto)</CardTitle>
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-blue-600">Gastronomía</CardTitle>
                         <UtensilsCrossed className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent className="pt-4">
-                        <div className="text-2xl font-bold text-blue-700">${overviewData?.food?.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground mt-1">Ingresos - Gastos de insumos</p>
+                        <div className="text-xl font-bold text-blue-700">${overviewData?.food?.toLocaleString()}</div>
+                        <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">Ingresos - Gastos</p>
                     </CardContent>
                 </Card>
                 <Card className="overflow-hidden border-none shadow-md transition-all hover:shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-purple-500/5">
-                        <CardTitle className="text-sm font-bold uppercase tracking-wider text-purple-600">Indumentaria</CardTitle>
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-purple-600">Indumentaria</CardTitle>
                         <Disc className="h-4 w-4 text-purple-500" />
                     </CardHeader>
                     <CardContent className="pt-4">
-                        <div className="text-2xl font-bold text-purple-700">${overviewData?.clothing?.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground mt-1">Ventas de ropa y accesorios</p>
+                        <div className="text-xl font-bold text-purple-700">${overviewData?.clothing?.toLocaleString()}</div>
+                        <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">Ventas de productos</p>
+                    </CardContent>
+                </Card>
+                <Card className="overflow-hidden border-none shadow-md transition-all hover:shadow-lg">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-pink-500/5">
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-pink-600">Inquilinos</CardTitle>
+                        <Users className="h-4 w-4 text-pink-500" />
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                        <div className="text-xl font-bold text-pink-700">${overviewData?.tenants?.toLocaleString()}</div>
+                        <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">Rentas del complejo</p>
                     </CardContent>
                 </Card>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="lg:col-span-3 border-none shadow-lg overflow-hidden">
-                    <CardHeader className="border-b bg-muted/20">
+                    <CardHeader className="border-b bg-muted/20 text-blue-800">
                         <CardTitle className="text-lg">Distribución por Sector</CardTitle>
                         <CardDescription>
                             Comparativa de desempeño para {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
@@ -230,6 +246,7 @@ export function DashboardOverview() {
                         </ChartContainer>
                     </CardContent>
                 </Card>
+
 
                 <Card className="lg:col-span-4 border-none shadow-lg overflow-hidden">
                     <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/20 pb-4">

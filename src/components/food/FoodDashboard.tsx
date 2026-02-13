@@ -7,13 +7,13 @@ import { getCurrentMonthFoodStats, getFoodEvolution } from "@/lib/food.service"
 import { UtensilsCrossed, TrendingUp, TrendingDown, DollarSign, Wallet, ArrowUpRight, ArrowDownRight, Loader2, Landmark, Users } from "lucide-react"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { months, years, ranges } from "@/utils/utils"
+import { months, years, ranges, defaultMonth, defaultYear } from "@/utils/utils"
 import { FoodManagement } from "./FoodManagement"
 import { FoodStats } from "@/types"
 
 export function FoodDashboard() {
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
-    const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString())
+    const [selectedYear, setSelectedYear] = useState(defaultYear)
+    const [selectedMonth, setSelectedMonth] = useState(defaultMonth)
     const [evolutionRange, setEvolutionRange] = useState("12")
     const [loading, setLoading] = useState(true)
     const [stats, setStats] = useState<FoodStats | null>(null)

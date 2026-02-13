@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/co
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 import { getDetailedSportsStats, getSportsEvolutionRange } from "@/lib/sports_dashboard.service"
-import { months, years, ranges } from "@/utils/utils"
+import { months, years, ranges, defaultMonth, defaultYear } from "@/utils/utils"
 import { SportsManagement } from "./SportsManagement"
 import { SportsStats } from "@/types"
 
@@ -28,8 +28,8 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function SportsDashboard() {
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1 + "")
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear() + "")
+    const [selectedMonth, setSelectedMonth] = useState(defaultMonth)
+    const [selectedYear, setSelectedYear] = useState(defaultYear)
     const [evolutionRange, setEvolutionRange] = useState("12")
 
     const [stats, setStats] = useState<SportsStats | null>(null)
