@@ -6,7 +6,13 @@ const months = [
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ]
 
-export function generateMonthlyPDF(data: { sports: any[], food: any[], clothing: any[], year: number, month: number }) {
+export function generateMonthlyPDF(data: {
+    sports: any[],
+    food: { income: any[], expenses: any[] },
+    clothing: any[],
+    year: number,
+    month: number
+}) {
     const doc = new jsPDF()
     const monthName = months[data.month - 1]
     const title = `Reporte Mensual - ${monthName} ${data.year}`
@@ -26,9 +32,12 @@ export function generateMonthlyPDF(data: { sports: any[], food: any[], clothing:
 
     // Summary Section
     const sportsTotal = data.sports.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
-    const foodIncome = data.food.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
-    const foodExpense = data.food.reduce((acc, curr) => acc + Number(curr.total_expense || 0), 0)
-    const foodNet = foodIncome - foodExpense
+
+    // Food calculations
+    const foodIncomeTotal = data.food.income.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
+    const foodExpenseTotal = data.food.expenses.reduce((acc, curr) => acc + Number(curr.amount || 0), 0)
+    const foodNet = foodIncomeTotal - foodExpenseTotal
+
     const clothingTotal = data.clothing.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
     const grandTotal = sportsTotal + foodNet + clothingTotal
 
@@ -76,14 +85,21 @@ export function generateMonthlyPDF(data: { sports: any[], food: any[], clothing:
     doc.text("Detalle: Gastronomía", 20, currentY)
     currentY += 5
 
+    const categoryNames: any = {
+        materia_prima: 'Materia Prima',
+        sueldos: 'Sueldos',
+        impuestos: 'Impuestos',
+        otros: 'Otros'
+    }
+
     autoTable(doc, {
         startY: currentY,
-        head: [['Ventas Totales', 'Gastos Insumos', 'Beneficio Neto']],
-        body: data.food.map(f => [
-            `$${Number(f.total_income).toLocaleString()}`,
-            `$${Number(f.total_expense).toLocaleString()}`,
-            `$${(Number(f.total_income) - Number(f.total_expense)).toLocaleString()}`
-        ]),
+        head: [['Concepto', 'Categoría', 'Monto']],
+        body: [
+            ...data.food.income.map(inc => ['Ingreso por Ventas', '-', `$${Number(inc.total_income).toLocaleString()}`]),
+            ...data.food.expenses.map(exp => ['Gasto Operativo', categoryNames[exp.category] || exp.category, `$${Number(exp.amount).toLocaleString()}`]),
+            [{ content: 'BALANCE NETO', colSpan: 2, styles: { fontStyle: 'bold' } }, { content: `$${foodNet.toLocaleString()}`, styles: { fontStyle: 'bold' } }]
+        ],
         headStyles: { fillColor: [59, 130, 246] as any }, // Blue 500
         styles: { fontSize: 9 }
     })
