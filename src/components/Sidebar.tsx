@@ -1,7 +1,7 @@
 "use client"
 
 import { SidebarContent, Sidebar, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarSeparator, useSidebar, } from "@/components/ui/sidebar"
-import { Ham, LayoutDashboard, LogOut, Shirt, Trophy, Users } from "lucide-react"
+import { Ham, LayoutDashboard, LogOut, Shirt, Trophy, Users, PartyPopper } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -32,6 +32,11 @@ const menuItems = [
     title: "Inquilinos",
     url: "/dashboard/tenants",
     icon: Users,
+  },
+  {
+    title: "Eventos",
+    url: "/dashboard/eventos",
+    icon: PartyPopper,
   },
 ]
 

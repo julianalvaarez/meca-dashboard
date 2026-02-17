@@ -110,3 +110,20 @@ export type TenantStats = {
   }[];
   variation?: number;
 }
+
+export type Event = {
+  id: string;
+  name: string;
+  created_at?: string;
+}
+
+export type EventMonthlyIncome = {
+  id?: string;
+  event_id: string;
+  year: number;
+  month: number;
+  total_income: number;
+  created_at?: string;
+  events?: { name: string };
+}
+
