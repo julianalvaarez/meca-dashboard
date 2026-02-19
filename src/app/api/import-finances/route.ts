@@ -1,4 +1,5 @@
 // /app/api/import-finances/route.ts
+export const runtime = "nodejs";
 
 import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
@@ -10,6 +11,9 @@ type SportPayload = {
     total_income: number;
     courts_rented: number;
 };
+export async function OPTIONS() {
+    return NextResponse.json({}, { status: 200 });
+}
 
 export async function POST(req: NextRequest) {
     try {

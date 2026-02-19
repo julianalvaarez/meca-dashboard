@@ -12,7 +12,8 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/_next') ||
         pathname.includes('/api/auth') ||
         pathname === '/favicon.ico' ||
-        pathname === '/meca-logo.png'
+        pathname === '/meca-logo.png' ||
+        pathname.startsWith("/api")
     ) {
         return NextResponse.next();
     }
