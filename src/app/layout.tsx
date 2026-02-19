@@ -29,3 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     </html>
   );
 }
+
+export const viewport = {
+  themeColor: "#000",
+};

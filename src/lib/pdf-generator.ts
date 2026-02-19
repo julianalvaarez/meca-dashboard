@@ -11,6 +11,7 @@ export function generateMonthlyPDF(data: {
     food: { income: any[], expenses: any[] },
     clothing: any[],
     tenants: any[],
+    events: any[],
     year: number,
     month: number
 }) {
@@ -41,7 +42,8 @@ export function generateMonthlyPDF(data: {
 
     const clothingTotal = data.clothing.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
     const tenantsTotal = data.tenants.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
-    const grandTotal = sportsTotal + foodNet + clothingTotal + tenantsTotal
+    const eventsTotal = data.events.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
+    const grandTotal = sportsTotal + foodNet + clothingTotal + tenantsTotal + eventsTotal
 
     doc.setFontSize(14)
     doc.text("Resumen (Ingresos Netos)", 20, currentY)
@@ -55,6 +57,7 @@ export function generateMonthlyPDF(data: {
             ['Gastronomía', 'Ingreso Neto (Ventas - Costos)', `$${foodNet.toLocaleString()}`],
             ['Indumentaria', 'Venta de productos', `$${clothingTotal.toLocaleString()}`],
             ['Inquilinos', 'Rentas y alquileres', `$${tenantsTotal.toLocaleString()}`],
+            ['Eventos', 'Ingresos por eventos', `$${eventsTotal.toLocaleString()}`],
             ['TOTAL', 'Balance Final del Mes', `$${grandTotal.toLocaleString()}`],
         ],
         theme: 'striped',
@@ -139,6 +142,24 @@ export function generateMonthlyPDF(data: {
             `$${Number(c.total_income).toLocaleString()}`
         ]),
         headStyles: { fillColor: [139, 92, 246] as any }, // Violet 500
+        styles: { fontSize: 9 }
+    })
+
+    currentY = (doc as any).lastAutoTable.finalY + 15
+
+    // Detailed Events Section
+    doc.setFontSize(14)
+    doc.text("Detalle: Eventos", 20, currentY)
+    currentY += 5
+
+    autoTable(doc, {
+        startY: currentY,
+        head: [['Evento', 'Monto']],
+        body: data.events.map(e => [
+            e.events?.name || 'Evento',
+            `$${Number(e.total_income).toLocaleString()}`
+        ]),
+        headStyles: { fillColor: [245, 158, 11] as any }, // Amber 500
         styles: { fontSize: 9 }
     })
 

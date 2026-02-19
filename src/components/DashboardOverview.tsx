@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "
 import { Button } from "@/components/ui/button"
 import { getOverviewStats, getEvolutionRange, getFullMonthReport } from "@/lib/dashboard.service"
 import { generateMonthlyPDF } from "@/lib/pdf-generator"
-import { Loader2, DollarSign, Trophy, UtensilsCrossed, Disc, FileDown, Users } from "lucide-react"
+import { Loader2, DollarSign, Trophy, UtensilsCrossed, Disc, FileDown, Users, PartyPopper } from "lucide-react"
 import { useEffect, useState, useMemo } from "react"
 import { useDashboard } from "@/context/DashboardContext"
 import { toast } from "sonner"
@@ -30,6 +30,10 @@ const chartConfig = {
     tenants: {
         label: "Inquilinos",
         color: "#ec4899",
+    },
+    events: {
+        label: "Eventos",
+        color: "#f59e0b",
     },
     total: {
         label: "Ingreso Total",
@@ -107,6 +111,7 @@ export function DashboardOverview() {
         { sector: "food", value: overviewData?.food || 0, fill: chartConfig.food.color },
         { sector: "clothing", value: overviewData?.clothing || 0, fill: chartConfig.clothing.color },
         { sector: "tenants", value: overviewData?.tenants || 0, fill: chartConfig.tenants.color },
+        { sector: "events", value: overviewData?.events || 0, fill: chartConfig.events.color },
     ], [overviewData])
 
     if (loading && !overviewData) {
@@ -157,7 +162,7 @@ export function DashboardOverview() {
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
                 <Card className="overflow-hidden border-none shadow-md transition-all hover:shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-primary/5">
                         <CardTitle className="text-xs font-bold uppercase tracking-wider text-primary/70">Balance Total</CardTitle>
@@ -206,6 +211,16 @@ export function DashboardOverview() {
                     <CardContent className="pt-4">
                         <div className="text-xl font-bold text-pink-700">${overviewData?.tenants?.toLocaleString()}</div>
                         <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">Rentas del complejo</p>
+                    </CardContent>
+                </Card>
+                <Card className="overflow-hidden border-none shadow-md transition-all hover:shadow-lg">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-amber-500/5">
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-amber-600">Eventos</CardTitle>
+                        <PartyPopper className="h-4 w-4 text-amber-500" />
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                        <div className="text-xl font-bold text-amber-700">${overviewData?.events?.toLocaleString()}</div>
+                        <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">Ingresos por eventos</p>
                     </CardContent>
                 </Card>
             </div>
