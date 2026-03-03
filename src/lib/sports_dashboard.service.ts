@@ -228,3 +228,37 @@ export async function getSportsEvolutionRange(range: number) {
         return { success: false, error: "Error al obtener evolución de deportes" };
     }
 }
+
+export async function getSportsExpenses(year: number, month: number) {
+    try {
+        const { data, error } = await supabase
+            .from("general_expenses")
+            .select("*")
+            .eq("year", year)
+            .eq("month", month)
+            .single();
+
+        if (error && error.code !== 'PGRST116') return { success: false, error };
+        return { success: true, data: data || null };
+    } catch (error) {
+        return { success: false, error: "Error al obtener gastos deportivos" };
+    }
+}
+
+export async function saveSportsExpense(year: number, month: number, total_expense: number) {
+    try {
+        const { data, error } = await supabase
+            .from("general_expenses")
+            .upsert(
+                { year, month, total_expenses: total_expense },
+                { onConflict: 'year,month' }
+            )
+            .select()
+            .single();
+
+        if (error) return { success: false, error };
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: "Error al guardar gastos deportivos" };
+    }
+}

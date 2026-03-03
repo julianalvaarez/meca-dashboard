@@ -37,7 +37,8 @@ export async function upsertGeneralExpense(expense: Omit<GeneralExpense, 'id' | 
 
         if (error) {
             console.error("Supabase Upsert Error:", error);
-            return { success: false, error: error.message || error };
+            const errorMessage = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+            return { success: false, error: errorMessage };
         }
         return { success: true, data };
     } catch (error: any) {

@@ -66,6 +66,7 @@ export function generateMonthlyPDF(data: {
             ['DEPORTIVO', 'Ingresos Indumentaria', `$${clothingTotal.toLocaleString()}`],
             ['DEPORTIVO', 'Ingresos Inquilinos', `$${tenantsTotal.toLocaleString()}`],
             ['DEPORTIVO', 'Ingresos Eventos', `$${eventsTotal.toLocaleString()}`],
+            ['DEPORTIVO', 'Total Ingresos Deportivos', `$${sportsSectorIncome.toLocaleString()}`],
             ['DEPORTIVO', 'Gastos Deportivos', `$${generalExpensesTotal.toLocaleString()}`],
             ['DEPORTIVO', 'Balance Deportivo', `$${sportsSectorNet.toLocaleString()}`],
             ['', '', ''], // Spacer
