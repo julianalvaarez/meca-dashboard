@@ -12,6 +12,7 @@ export function generateMonthlyPDF(data: {
     clothing: any[],
     tenants: any[],
     events: any[],
+    generalExpenses: any,
     year: number,
     month: number
 }) {
@@ -43,26 +44,42 @@ export function generateMonthlyPDF(data: {
     const clothingTotal = data.clothing.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
     const tenantsTotal = data.tenants.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
     const eventsTotal = data.events.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0)
-    const grandTotal = sportsTotal + foodNet + clothingTotal + tenantsTotal + eventsTotal
+    const generalExpensesTotal = Number(data.generalExpenses?.total_expenses || 0)
+    const grandTotal = (sportsTotal + foodNet + clothingTotal + tenantsTotal + eventsTotal) - generalExpensesTotal
+
+    const sportsSectorIncome = sportsTotal + clothingTotal + tenantsTotal + eventsTotal
+    const sportsSectorNet = sportsSectorIncome - generalExpensesTotal
 
     doc.setFontSize(14)
-    doc.text("Resumen (Ingresos Netos)", 20, currentY)
+    doc.text("Resumen de Balances por Sector", 20, currentY)
     currentY += 10
 
     autoTable(doc, {
         startY: currentY,
-        head: [['Sector', 'Detalle', 'Monto']],
+        head: [['Sector', 'Concepto', 'Monto']],
         body: [
-            ['Deportes', 'Alquiler de canchas', `$${sportsTotal.toLocaleString()}`],
-            ['Gastronomía', 'Ingreso Neto (Ventas - Costos)', `$${foodNet.toLocaleString()}`],
-            ['Indumentaria', 'Venta de productos', `$${clothingTotal.toLocaleString()}`],
-            ['Inquilinos', 'Rentas y alquileres', `$${tenantsTotal.toLocaleString()}`],
-            ['Eventos', 'Ingresos por eventos', `$${eventsTotal.toLocaleString()}`],
-            ['TOTAL', 'Balance Final del Mes', `$${grandTotal.toLocaleString()}`],
+            ['GASTRONOMÍA', 'Ingresos por Ventas', `$${foodIncomeTotal.toLocaleString()}`],
+            ['GASTRONOMÍA', 'Gastos Operativos', `$${foodExpenseTotal.toLocaleString()}`],
+            ['GASTRONOMÍA', 'Balance Gastronomía', `$${foodNet.toLocaleString()}`],
+            ['', '', ''], // Spacer
+            ['DEPORTIVO', 'Ingresos Deportes (Canchas)', `$${sportsTotal.toLocaleString()}`],
+            ['DEPORTIVO', 'Ingresos Indumentaria', `$${clothingTotal.toLocaleString()}`],
+            ['DEPORTIVO', 'Ingresos Inquilinos', `$${tenantsTotal.toLocaleString()}`],
+            ['DEPORTIVO', 'Ingresos Eventos', `$${eventsTotal.toLocaleString()}`],
+            ['DEPORTIVO', 'Gastos Deportivos', `$${generalExpensesTotal.toLocaleString()}`],
+            ['DEPORTIVO', 'Balance Deportivo', `$${sportsSectorNet.toLocaleString()}`],
+            ['', '', ''], // Spacer
+            ['TOTAL', 'BALANCE TOTAL GLOBAL', `$${grandTotal.toLocaleString()}`],
         ],
         theme: 'striped',
         headStyles: { fillColor: [15, 23, 42] as any, textColor: 255 },
-        styles: { fontSize: 10 }
+        styles: { fontSize: 10 },
+        didParseCell: function (data) {
+            // Bold indices: 2 (Balance Gastro), 9 (Balance Deportivo), 11 (Balance Global)
+            if (data.row.index === 2 || data.row.index === 10 || data.row.index === 12) {
+                data.cell.styles.fontStyle = 'bold';
+            }
+        }
     })
 
     currentY = (doc as any).lastAutoTable.finalY + 20
@@ -160,6 +177,29 @@ export function generateMonthlyPDF(data: {
             `$${Number(e.total_income).toLocaleString()}`
         ]),
         headStyles: { fillColor: [245, 158, 11] as any }, // Amber 500
+        styles: { fontSize: 9 }
+    })
+
+    currentY = (doc as any).lastAutoTable.finalY + 15
+
+    // Detailed Sports Expenses Section
+    doc.setFontSize(14)
+    doc.text("Detalle: Gastos del Sector Deportivo", 20, currentY)
+    doc.setFontSize(10)
+    doc.setTextColor(100)
+    currentY += 5
+    doc.text("Consolidado de gastos operativos (Deportes, Indumentaria, Inquilinos, Eventos)", 20, currentY)
+    doc.setTextColor(0)
+    currentY += 5
+
+    autoTable(doc, {
+        startY: currentY,
+        head: [['Concepto', 'Monto']],
+        body: [
+            ['Gastos de Operación y Mantenimiento', `$${Number(data.generalExpenses?.total_expenses || 0).toLocaleString()}`],
+            [{ content: 'TOTAL GASTOS DEPORTIVOS', styles: { fontStyle: 'bold' } }, { content: `$${Number(data.generalExpenses?.total_expenses || 0).toLocaleString()}`, styles: { fontStyle: 'bold' } }]
+        ],
+        headStyles: { fillColor: [239, 68, 68] as any }, // Red 500
         styles: { fontSize: 9 }
     })
 

@@ -127,3 +127,11 @@ export type EventMonthlyIncome = {
   events?: { name: string };
 }
 
+export type GeneralExpense = {
+  id?: string;
+  year: number;
+  month: number;
+  total_expenses: number;
+  created_at?: string;
+}
+

@@ -2,34 +2,43 @@ import { supabase } from "./supabase";
 
 export async function getOverviewStats(year: number, month: number) {
     try {
-        const [sports, foodIncome, foodExpenses, clothing, tenants, events] = await Promise.all([
+        const [sports, foodIncome, foodExpenses, clothing, tenants, events, generalExpenses] = await Promise.all([
             supabase.from("sports_stats").select("total_income").eq("year", year).eq("month", month),
             supabase.from("food_monthly_income").select("total_income").eq("year", year).eq("month", month),
             supabase.from("food_monthly_expenses").select("amount").eq("year", year).eq("month", month),
             supabase.from("clothing_stats").select("total_income").eq("year", year).eq("month", month),
             supabase.from("tenant_monthly_income").select("total_income").eq("year", year).eq("month", month),
             supabase.from("event_monthly_income").select("total_income").eq("year", year).eq("month", month),
+            supabase.from("general_expenses").select("total_expenses").eq("year", year).eq("month", month),
         ]);
 
         const sportsIncome = sports.data?.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0) || 0;
 
         const fIncome = foodIncome.data?.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0) || 0;
         const fExpenses = foodExpenses.data?.reduce((acc, curr) => acc + Number(curr.amount || 0), 0) || 0;
-        const foodNetIncome = fIncome - fExpenses;
+        const foodSectorNet = fIncome - fExpenses;
 
         const clothingIncome = clothing.data?.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0) || 0;
         const tenantIncome = tenants.data?.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0) || 0;
         const eventsIncome = events.data?.reduce((acc, curr) => acc + Number(curr.total_income || 0), 0) || 0;
 
+        const sportsSectorExpenses = Number(generalExpenses.data?.[0]?.total_expenses || 0);
+        const sportsSectorIncome = sportsIncome + clothingIncome + tenantIncome + eventsIncome;
+        const sportsSectorNet = sportsSectorIncome - sportsSectorExpenses;
+
         return {
             success: true,
             data: {
                 sports: sportsIncome,
-                food: foodNetIncome,
+                food: foodSectorNet,
                 clothing: clothingIncome,
                 tenants: tenantIncome,
                 events: eventsIncome,
-                total: sportsIncome + foodNetIncome + clothingIncome + tenantIncome + eventsIncome,
+                sportsSectorIncome,
+                sportsSectorExpenses,
+                sportsSectorNet,
+                foodSectorNet,
+                total: foodSectorNet + sportsSectorNet,
             }
         };
     } catch (error) {
@@ -40,13 +49,14 @@ export async function getOverviewStats(year: number, month: number) {
 
 export async function getFullMonthReport(year: number, month: number) {
     try {
-        const [sports, foodIncome, foodExpenses, clothing, tenants, events] = await Promise.all([
+        const [sports, foodIncome, foodExpenses, clothing, tenants, events, generalExpenses] = await Promise.all([
             supabase.from("sports_stats").select("*").eq("year", year).eq("month", month),
             supabase.from("food_monthly_income").select("*").eq("year", year).eq("month", month),
             supabase.from("food_monthly_expenses").select("*").eq("year", year).eq("month", month),
             supabase.from("clothing_stats").select("*").eq("year", year).eq("month", month),
             supabase.from("tenant_monthly_income").select("*, tenants(name)").eq("year", year).eq("month", month),
             supabase.from("event_monthly_income").select("*, events(name)").eq("year", year).eq("month", month),
+            supabase.from("general_expenses").select("*").eq("year", year).eq("month", month),
         ]);
 
         return {
@@ -60,6 +70,7 @@ export async function getFullMonthReport(year: number, month: number) {
                 clothing: clothing.data || [],
                 tenants: tenants.data || [],
                 events: events.data || [],
+                generalExpenses: generalExpenses.data?.[0] || null,
                 year,
                 month
             }
@@ -72,13 +83,14 @@ export async function getFullMonthReport(year: number, month: number) {
 
 export async function getYearlyEvolution(year: number) {
     try {
-        const [sports, foodIncome, foodExpenses, clothing, tenants, events] = await Promise.all([
+        const [sports, foodIncome, foodExpenses, clothing, tenants, events, generalExpenses] = await Promise.all([
             supabase.from("sports_stats").select("total_income, month").eq("year", year),
             supabase.from("food_monthly_income").select("total_income, month").eq("year", year),
             supabase.from("food_monthly_expenses").select("amount, month").eq("year", year),
             supabase.from("clothing_stats").select("total_income, month").eq("year", year),
             supabase.from("tenant_monthly_income").select("total_income, month").eq("year", year),
             supabase.from("event_monthly_income").select("total_income, month").eq("year", year),
+            supabase.from("general_expenses").select("total_expenses, month").eq("year", year),
         ]);
 
         const monthlyData = Array.from({ length: 12 }, (_, i) => ({
@@ -89,6 +101,7 @@ export async function getYearlyEvolution(year: number) {
             clothing: 0,
             tenants: 0,
             events: 0,
+            generalExpenses: 0,
             total: 0,
         }));
 
@@ -127,6 +140,12 @@ export async function getYearlyEvolution(year: number) {
             monthlyData[item.month - 1].total += income;
         });
 
+        generalExpenses.data?.forEach(item => {
+            const expense = Number(item.total_expenses || 0);
+            monthlyData[item.month - 1].generalExpenses += expense;
+            monthlyData[item.month - 1].total -= expense;
+        });
+
         return { success: true, data: monthlyData };
     } catch (error) {
         console.error("Yearly Evolution Error:", error);
@@ -136,13 +155,14 @@ export async function getYearlyEvolution(year: number) {
 
 export async function getEvolutionRange(range: number) {
     try {
-        const [sports, foodIncome, foodExpenses, clothing, tenants, events] = await Promise.all([
+        const [sports, foodIncome, foodExpenses, clothing, tenants, events, generalExpenses] = await Promise.all([
             supabase.from("sports_stats").select("total_income, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range * 3),
             supabase.from("food_monthly_income").select("total_income, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range),
             supabase.from("food_monthly_expenses").select("amount, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range * 4),
             supabase.from("clothing_stats").select("total_income, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range),
             supabase.from("tenant_monthly_income").select("total_income, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range * 5),
             supabase.from("event_monthly_income").select("total_income, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range * 5),
+            supabase.from("general_expenses").select("total_expenses, month, year").order("year", { ascending: false }).order("month", { ascending: false }).limit(range),
         ]);
 
         const grouped: { [key: string]: any } = {};
@@ -150,7 +170,7 @@ export async function getEvolutionRange(range: number) {
         const ensureItem = (year: number, month: number) => {
             const key = `${year}-${month}`;
             if (!grouped[key]) {
-                grouped[key] = { year, month, sports: 0, food: 0, clothing: 0, tenants: 0, events: 0, total: 0 };
+                grouped[key] = { year, month, sports: 0, food: 0, clothing: 0, tenants: 0, events: 0, generalExpenses: 0, total: 0 };
             }
             return key;
         };
@@ -189,6 +209,12 @@ export async function getEvolutionRange(range: number) {
             const key = ensureItem(item.year, item.month);
             grouped[key].events += Number(item.total_income || 0);
             grouped[key].total += Number(item.total_income || 0);
+        });
+
+        generalExpenses.data?.forEach(item => {
+            const key = ensureItem(item.year, item.month);
+            grouped[key].generalExpenses += Number(item.total_expenses || 0);
+            grouped[key].total -= Number(item.total_expenses || 0);
         });
 
         const result = Object.values(grouped).map((item: any) => ({
